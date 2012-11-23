@@ -76,15 +76,14 @@ public abstract class HttpFetcher {
 			}
 
 			super.startElement(ns, localName, qName, attributes);
-
 		}
 	}
 
 	private static final Map<String, Map<String, String>> COOKIES = new ConcurrentHashMap<>();
 
 	private static boolean useRandomAgent = true;
-
 	private static boolean useFakeReferer = true;
+
 	static {
 		setMaxConnections(30);
 		setFollowRedirect(false);
@@ -108,21 +107,22 @@ public abstract class HttpFetcher {
 			"Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1" };
 
 	public static byte[] UTF32BE = { 0x00, 0x00, (byte) 0xFE, (byte) 0xFF };
-
 	public static byte[] UTF32LE = { (byte) 0xFF, (byte) 0xFE, 0x00, 0x00 };
 	public static byte[] UTF16BE = { (byte) 0xFE, (byte) 0xFF };
 	public static byte[] UTF16LE = { (byte) 0xFF, (byte) 0xFE };
 	public static byte[] UTF8 = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
-	public static final int DEFAULT_READ_TIMEOUT = 0;
 
+	public static final int DEFAULT_READ_TIMEOUT = 0;
 	public static final int DEFAULT_CONNECT_TIMEOUT = 5000;
+
 	public static final String DEFAULT_CHARSET = "UTF-8";
 
 	public final static Pattern CHARSET_PATTERN = Pattern
 			.compile(
 					"['\" ;]charset\\s*=([^'\" ]+)[ '\"]|charset\\s*=\\s*\"?([^'\\\" ]+)",
 					Pattern.CASE_INSENSITIVE);
-	private static Random rander = new Random();
+
+	private static final Random rander = new Random();
 
 	public static void addCookie(String domain, String key, String value) {
 
@@ -143,6 +143,7 @@ public abstract class HttpFetcher {
 		Matcher matcher = CHARSET_PATTERN.matcher(content);
 
 		if (matcher.find()) {
+
 			String charset = matcher.group(1);
 
 			if (charset == null) {
@@ -504,7 +505,6 @@ public abstract class HttpFetcher {
 						+ "\"; filename=\"" + key + "\"" });
 
 		int n = -1;
-
 		while ((n = in.read(buff)) > 0) {
 			mos.write(buff, 0, n);
 		}
