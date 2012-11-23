@@ -21,21 +21,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-import javax.xml.bind.DataBindingException;
-import javax.xml.bind.JAXB;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.sax.SAXSource;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLFilterImpl;
-
 /**
  * Simple HTTP Fetcher implemented by jdk URL
  * 
@@ -45,38 +30,6 @@ public abstract class HttpFetcher {
 
 	public interface HttpCallback {
 		public void connection(final HttpURLConnection conn);
-	}
-
-	private static class XMLDefaultNamespaceFilter extends XMLFilterImpl {
-
-		private final String[] defaultNamespaces;
-
-		public XMLDefaultNamespaceFilter(XMLReader arg,
-				String[] defaultNamespaces) {
-			super(arg);
-			this.defaultNamespaces = defaultNamespaces;
-		}
-
-		@Override
-		public void startElement(String uri, String localName, String qName,
-				Attributes attributes) throws SAXException {
-
-			String ns = uri;
-
-			if (uri == null || "".equals(uri) && defaultNamespaces != null
-					&& defaultNamespaces.length > 0) {
-				ns = defaultNamespaces[0];
-			} else if (localName == null || "".equals(localName)) {
-				for (String _uri : defaultNamespaces) {
-					if (_uri.equals(uri)) {
-						ns = defaultNamespaces[0];
-						break;
-					}
-				}
-			}
-
-			super.startElement(ns, localName, qName, attributes);
-		}
 	}
 
 	private static final Map<String, Map<String, String>> COOKIES = new ConcurrentHashMap<>();
@@ -105,12 +58,6 @@ public abstract class HttpFetcher {
 			"Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25",
 			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/534.55.3 (KHTML, like Gecko) Version/5.1.3 Safari/534.53.10",
 			"Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1" };
-
-	public static byte[] UTF32BE = { 0x00, 0x00, (byte) 0xFE, (byte) 0xFF };
-	public static byte[] UTF32LE = { (byte) 0xFF, (byte) 0xFE, 0x00, 0x00 };
-	public static byte[] UTF16BE = { (byte) 0xFE, (byte) 0xFF };
-	public static byte[] UTF16LE = { (byte) 0xFF, (byte) 0xFE };
-	public static byte[] UTF8 = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
 
 	public static final int DEFAULT_READ_TIMEOUT = 0;
 	public static final int DEFAULT_CONNECT_TIMEOUT = 5000;
@@ -729,47 +676,6 @@ public abstract class HttpFetcher {
 		return AGENTS[rander.nextInt(AGENTS.length)];
 	}
 
-	private static void removeBOM(InputStream stream) throws IOException {
-
-		if (removeBOM(stream, UTF32BE)) {
-			return;
-		}
-
-		if (removeBOM(stream, UTF32LE)) {
-			return;
-		}
-
-		if (removeBOM(stream, UTF16BE)) {
-			return;
-		}
-
-		if (removeBOM(stream, UTF16LE)) {
-			return;
-		}
-
-		if (removeBOM(stream, UTF8)) {
-			return;
-		}
-	}
-
-	private static boolean removeBOM(InputStream reader, byte[] bom)
-			throws IOException {
-
-		reader.mark(bom.length);
-
-		byte[] possibleBOM = new byte[bom.length];
-		reader.read(possibleBOM);
-
-		for (int x = 0; x < bom.length; x++) {
-			if (bom[x] != possibleBOM[x]) {
-				reader.reset();
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 	public static void setFollowRedirect(boolean b) {
 		HttpURLConnection.setFollowRedirects(b);
 	}
@@ -840,54 +746,6 @@ public abstract class HttpFetcher {
 		}
 
 		return content(conn);
-	}
-
-	public static <T> T unmarshal(InputStream stream, Class<T> clazz,
-			String... uris) throws IOException {
-
-		BufferedInputStream bis;
-
-		if (!(stream instanceof BufferedInputStream)) {
-			bis = new BufferedInputStream(stream, 4096);
-		} else {
-			bis = (BufferedInputStream) stream;
-		}
-
-		removeBOM(bis);
-
-		try {
-
-			JAXBContext jc = JAXBContext.newInstance(clazz);
-			Unmarshaller unmarshaller = jc.createUnmarshaller();
-
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			XMLReader reader = factory.newSAXParser().getXMLReader();
-
-			XMLFilterImpl filter = new XMLDefaultNamespaceFilter(reader, uris);
-			reader.setContentHandler(unmarshaller.getUnmarshallerHandler());
-			SAXSource source = new SAXSource(filter, new InputSource(bis));
-
-			return unmarshaller.unmarshal(source, clazz).getValue();
-
-		} catch (JAXBException | SAXException | ParserConfigurationException e) {
-			throw new DataBindingException(e);
-		}
-	}
-
-	public static <T> T unmarshal(String url, Class<T> clazz, String... uris)
-			throws IOException {
-		return unmarshal(stream(url), clazz, uris);
-	}
-
-	public static <T> T unmarshal(String url, int connect_timeout,
-			Class<T> clazz) throws IOException {
-		return JAXB.unmarshal(stream(url, connect_timeout), clazz);
-	}
-
-	public static <T> T unmarshal(String url, int connect_timeout,
-			int read_timeout, Class<T> clazz) throws IOException {
-		return JAXB
-				.unmarshal(stream(url, connect_timeout, read_timeout), clazz);
 	}
 
 }
