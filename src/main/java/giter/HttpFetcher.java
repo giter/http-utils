@@ -32,7 +32,7 @@ import java.util.zip.InflaterInputStream;
 public abstract class HttpFetcher {
 
 	public interface HttpCallback {
-		public void connection(final HttpURLConnection conn);
+		public void connection(final HttpURLConnection conn) throws IOException;
 	}
 
 	private static final Map<String, Map<String, String>> COOKIES = new ConcurrentHashMap<>();
