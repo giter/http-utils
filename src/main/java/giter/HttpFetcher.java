@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -109,12 +112,12 @@ public abstract class HttpFetcher {
 		return null;
 	}
 
-	protected static HttpURLConnection connect(String method, String url,
-			int connect_timeout, int read_timeout, String... headers)
-			throws IOException {
+	protected static HttpURLConnection connect(Proxy proxy, String method,
+			String url, int connect_timeout, int read_timeout,
+			String... headers) throws IOException {
 
 		HttpURLConnection conn = (HttpURLConnection) new URL(url)
-				.openConnection();
+				.openConnection(proxy == null ? Proxy.NO_PROXY : proxy);
 
 		conn.setUseCaches(false);
 		conn.setRequestMethod(method);
@@ -185,6 +188,13 @@ public abstract class HttpFetcher {
 		}
 
 		return conn;
+	}
+
+	protected static HttpURLConnection connect(String method, String url,
+			int connect_timeout, int read_timeout, String... headers)
+			throws IOException {
+		return connect(null, method, url, connect_timeout, read_timeout,
+				headers);
 	}
 
 	protected static HttpURLConnection connect(String method, String url,
@@ -265,10 +275,17 @@ public abstract class HttpFetcher {
 		return m;
 	}
 
+	public static String DELETE(Proxy proxy, String url, int connect_timeout,
+			int read_timeout, HttpCallback callback, String... headers)
+			throws IOException {
+		return text(proxy, "DELETE", url, connect_timeout, read_timeout,
+				callback, headers);
+	}
+
 	public static String DELETE(String url, int connect_timeout,
 			int read_timeout, HttpCallback callback, String... headers)
 			throws IOException {
-		return text("DELETE", url, connect_timeout, read_timeout, callback,
+		return DELETE(null, url, connect_timeout, read_timeout, callback,
 				headers);
 	}
 
@@ -330,10 +347,16 @@ public abstract class HttpFetcher {
 		return null;
 	}
 
+	public static String GET(Proxy proxy, String url, int connect_timeout,
+			int read_timeout, HttpCallback callback, String... headers)
+			throws IOException {
+		return text(proxy, "GET", url, connect_timeout, read_timeout, callback,
+				headers);
+	}
+
 	public static String GET(String url, int connect_timeout, int read_timeout,
 			HttpCallback callback, String... headers) throws IOException {
-		return text("GET", url, connect_timeout, read_timeout, callback,
-				headers);
+		return GET(null, url, connect_timeout, read_timeout, callback, headers);
 	}
 
 	public static String GET(String url, int connect_timeout, int read_timeout,
@@ -522,11 +545,11 @@ public abstract class HttpFetcher {
 		}
 	}
 
-	public static String POST(String url, Map<String, String> params,
-			int connect_timeout, int read_timeout, HttpCallback callback,
-			String... headers) throws IOException {
+	public static String POST(Proxy proxy, String url,
+			Map<String, String> params, int connect_timeout, int read_timeout,
+			HttpCallback callback, String... headers) throws IOException {
 
-		HttpURLConnection conn = connect("POST", url, connect_timeout,
+		HttpURLConnection conn = connect(proxy, "POST", url, connect_timeout,
 				read_timeout, headers);
 
 		postQuery(conn, params);
@@ -536,6 +559,13 @@ public abstract class HttpFetcher {
 		}
 
 		return content(conn);
+	}
+
+	public static String POST(String url, Map<String, String> params,
+			int connect_timeout, int read_timeout, HttpCallback callback,
+			String... headers) throws IOException {
+		return POST(null, url, params, connect_timeout, read_timeout, callback,
+				headers);
 	}
 
 	public static String POST(String url, Map<String, String> params,
@@ -734,11 +764,11 @@ public abstract class HttpFetcher {
 				headers);
 	}
 
-	public static String text(String method, String url, int connect_timeout,
-			int read_timeout, HttpCallback callback, String... headers)
-			throws IOException {
+	public static String text(Proxy proxy, String method, String url,
+			int connect_timeout, int read_timeout, HttpCallback callback,
+			String... headers) throws IOException {
 
-		HttpURLConnection conn = connect(method, url, connect_timeout,
+		HttpURLConnection conn = connect(proxy, method, url, connect_timeout,
 				read_timeout, headers);
 
 		if (callback != null) {
@@ -748,4 +778,14 @@ public abstract class HttpFetcher {
 		return content(conn);
 	}
 
+	public static void main(String[] args) throws IOException {
+		HttpFetcher.setFollowRedirect(true);
+		System.out
+				.println(GET(
+						new Proxy(Type.HTTP, new InetSocketAddress(
+								"113.77.34.211", 6666)),
+						"http://www.amazon.cn/gp/product/B00962GGBK/?tag=eqifa&ascsubtag=448345|1|00ac1e31fb9e58c1d9d3",
+						5000, 30000, null));
+
+	}
 }
