@@ -7,9 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.Proxy.Type;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -776,16 +774,5 @@ public abstract class HttpFetcher {
 		}
 
 		return content(conn);
-	}
-
-	public static void main(String[] args) throws IOException {
-		HttpFetcher.setFollowRedirect(true);
-		System.out
-				.println(GET(
-						new Proxy(Type.HTTP, new InetSocketAddress(
-								"113.77.34.211", 6666)),
-						"http://www.amazon.cn/gp/product/B00962GGBK/?tag=eqifa&ascsubtag=448345|1|00ac1e31fb9e58c1d9d3",
-						5000, 30000, null));
-
 	}
 }
