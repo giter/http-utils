@@ -67,7 +67,7 @@ public abstract class HttpFetcher {
 
 	public final static Pattern CHARSET_PATTERN = Pattern
 			.compile(
-					"['\" ;]charset\\s*=([^'\" ]+)[ '\"]|charset\\s*=\\s*\"?([^'\\\" ]+)",
+					"['\" ;]charset\\s*=([^'\" ]+)[ '\"]|charset\\s*=\\s*\"?([^'\\\" ]+)|['\" ;]encoding\\s*=([^'\" ]+)[ '\"]|encoding\\s*=\\s*\"?([^'\\\" ]+)",
 					Pattern.CASE_INSENSITIVE);
 
 	private static final Random rander = new Random();
@@ -96,11 +96,17 @@ public abstract class HttpFetcher {
 
 			if (charset == null) {
 				charset = matcher.group(2);
-			} else {
-				// 处理未在IANA列表中的字符集，如x-gbk
-				if (charset.startsWith("x-") || charset.startsWith("X-")) {
-					charset = charset.substring(2);
-				}
+			}
+			if (charset == null) {
+				charset = matcher.group(3);
+			}
+			if (charset == null) {
+				charset = matcher.group(4);
+			}
+
+			// 处理未在IANA列表中的字符集，如x-gbk
+			if (charset.startsWith("x-") || charset.startsWith("X-")) {
+				charset = charset.substring(2);
 			}
 
 			if (Charset.isSupported(charset)) {
