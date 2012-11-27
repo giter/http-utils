@@ -4,6 +4,8 @@ import giter.HttpFetcher.HttpCallback;
 
 import java.io.IOException;
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class HttpUtil {
@@ -11,9 +13,22 @@ public class HttpUtil {
 	private Proxy proxy = null;
 	private int connectTimeOut = HttpFetcher.DEFAULT_CONNECT_TIMEOUT;
 	private int readTimeOut = HttpFetcher.DEFAULT_READ_TIMEOUT;
-	private String[] headers = null;
+	private List<String> headers = null;
 	private HttpCallback callback = null;
 	private boolean persist = true;
+
+	private List<String> headers() {
+
+		if (headers == null) {
+			synchronized (HttpUtil.class) {
+				if (headers == null) {
+					headers = new ArrayList<String>();
+				}
+			}
+		}
+
+		return headers;
+	}
 
 	private HttpUtil() {
 	}
@@ -43,7 +58,11 @@ public class HttpUtil {
 	}
 
 	public HttpUtil headers(String... headers) {
-		this.headers = headers;
+
+		for (String header : headers) {
+			headers().add(header);
+		}
+
 		return this;
 	}
 
@@ -54,19 +73,20 @@ public class HttpUtil {
 
 	public String GET(String url) throws IOException {
 		return HttpFetcher.GET(proxy, url, connectTimeOut, readTimeOut,
-				callback, persist, headers == null ? new String[0] : headers);
+				callback, persist,
+				headers().toArray(new String[headers().size()]));
 	}
 
 	public String POST(String url, Map<String, String> params)
 			throws IOException {
 		return HttpFetcher.POST(proxy, url, params, connectTimeOut,
-				readTimeOut, callback, persist, headers == null ? new String[0]
-						: headers);
+				readTimeOut, callback, persist,
+				headers().toArray(new String[headers().size()]));
 	}
 
-	public String html(String method, String url) throws IOException {
-		return HttpFetcher.text(proxy, method, url, connectTimeOut,
-				readTimeOut, callback, persist, headers == null ? new String[0]
-						: headers);
+	public String DELETE(String url) throws IOException {
+		return HttpFetcher.DELETE(proxy, url, connectTimeOut, readTimeOut,
+				callback, persist,
+				headers().toArray(new String[headers().size()]));
 	}
 }
