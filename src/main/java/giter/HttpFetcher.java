@@ -29,6 +29,8 @@ import java.util.zip.InflaterInputStream;
  */
 public abstract class HttpFetcher {
 
+	private static final boolean DEFAULT_PERSIST = true;
+
 	public interface HttpCallback {
 		public void connection(final HttpURLConnection conn) throws IOException;
 	}
@@ -117,7 +119,7 @@ public abstract class HttpFetcher {
 	}
 
 	protected static HttpURLConnection connect(Proxy proxy, String method,
-			String url, int connect_timeout, int read_timeout,
+			String url, int connect_timeout, int read_timeout, boolean persist,
 			String... headers) throws IOException {
 
 		HttpURLConnection conn = (HttpURLConnection) new URL(url)
@@ -135,7 +137,8 @@ public abstract class HttpFetcher {
 		boolean referer = false;
 		boolean agent = false;
 
-		Map<String, String> cookies = cookies(conn);
+		Map<String, String> cookies = persist ? cookies(conn)
+				: new HashMap<String, String>();
 
 		for (String header : headers) {
 			String[] pair = header.split(":", 2);
@@ -194,6 +197,13 @@ public abstract class HttpFetcher {
 		return conn;
 	}
 
+	protected static HttpURLConnection connect(Proxy proxy, String method,
+			String url, int connect_timeout, int read_timeout,
+			String... headers) throws IOException {
+		return connect(proxy, method, url, connect_timeout, read_timeout, true,
+				headers);
+	}
+
 	protected static HttpURLConnection connect(String method, String url,
 			int connect_timeout, int read_timeout, String... headers)
 			throws IOException {
@@ -212,9 +222,10 @@ public abstract class HttpFetcher {
 		return connect(method, url, DEFAULT_CONNECT_TIMEOUT, options);
 	}
 
-	protected static String content(HttpURLConnection conn) throws IOException {
+	protected static String content(HttpURLConnection conn, boolean persist)
+			throws IOException {
 
-		try (InputStream in = getInputStream(conn)) {
+		try (InputStream in = getInputStream(conn, persist)) {
 
 			byte[] bs = new byte[4096];
 			ByteArrayOutputStream bos = new ByteArrayOutputStream(4096);
@@ -261,6 +272,10 @@ public abstract class HttpFetcher {
 		}
 	}
 
+	protected static String content(HttpURLConnection conn) throws IOException {
+		return content(conn, true);
+	}
+
 	protected static Map<String, String> cookies(HttpURLConnection conn) {
 
 		Map<String, String> m = new HashMap<>();
@@ -280,10 +295,17 @@ public abstract class HttpFetcher {
 	}
 
 	public static String DELETE(Proxy proxy, String url, int connect_timeout,
+			int read_timeout, HttpCallback callback, boolean persist,
+			String... headers) throws IOException {
+		return text(proxy, "DELETE", url, connect_timeout, read_timeout,
+				callback, persist, headers);
+	}
+
+	public static String DELETE(Proxy proxy, String url, int connect_timeout,
 			int read_timeout, HttpCallback callback, String... headers)
 			throws IOException {
-		return text(proxy, "DELETE", url, connect_timeout, read_timeout,
-				callback, headers);
+		return DELETE(proxy, url, connect_timeout, read_timeout, callback,
+				DEFAULT_PERSIST, headers);
 	}
 
 	public static String DELETE(String url, int connect_timeout,
@@ -352,10 +374,17 @@ public abstract class HttpFetcher {
 	}
 
 	public static String GET(Proxy proxy, String url, int connect_timeout,
+			int read_timeout, HttpCallback callback, boolean persist,
+			String... headers) throws IOException {
+		return text(proxy, "GET", url, connect_timeout, read_timeout, callback,
+				persist, headers);
+	}
+
+	public static String GET(Proxy proxy, String url, int connect_timeout,
 			int read_timeout, HttpCallback callback, String... headers)
 			throws IOException {
-		return text(proxy, "GET", url, connect_timeout, read_timeout, callback,
-				headers);
+		return GET(proxy, url, connect_timeout, read_timeout, callback,
+				DEFAULT_PERSIST, headers);
 	}
 
 	public static String GET(String url, int connect_timeout, int read_timeout,
@@ -430,12 +459,13 @@ public abstract class HttpFetcher {
 				(HttpCallback) null, headers);
 	}
 
-	protected static InputStream getInputStream(HttpURLConnection conn)
-			throws IOException {
+	protected static InputStream getInputStream(HttpURLConnection conn,
+			boolean persist) throws IOException {
 
 		InputStream cin = conn.getInputStream();
 
-		persistence(conn);
+		if (persist)
+			persist(conn);
 
 		String encoding = conn.getHeaderField("Content-Encoding");
 
@@ -459,6 +489,11 @@ public abstract class HttpFetcher {
 
 		bi.reset();
 		return bi;
+	}
+
+	protected static InputStream getInputStream(HttpURLConnection conn)
+			throws IOException {
+		return getInputStream(conn, true);
 	}
 
 	private static boolean isSupported(String charset) {
@@ -506,7 +541,7 @@ public abstract class HttpFetcher {
 		return params;
 	}
 
-	protected static void persistence(HttpURLConnection conn) {
+	protected static void persist(HttpURLConnection conn) {
 
 		for (Entry<String, List<String>> header : conn.getHeaderFields()
 				.entrySet()) {
@@ -551,10 +586,11 @@ public abstract class HttpFetcher {
 
 	public static String POST(Proxy proxy, String url,
 			Map<String, String> params, int connect_timeout, int read_timeout,
-			HttpCallback callback, String... headers) throws IOException {
+			HttpCallback callback, boolean persist, String... headers)
+			throws IOException {
 
 		HttpURLConnection conn = connect(proxy, "POST", url, connect_timeout,
-				read_timeout, headers);
+				read_timeout, persist, headers);
 
 		postQuery(conn, params);
 
@@ -562,7 +598,14 @@ public abstract class HttpFetcher {
 			callback.connection(conn);
 		}
 
-		return content(conn);
+		return content(conn, persist);
+	}
+
+	public static String POST(Proxy proxy, String url,
+			Map<String, String> params, int connect_timeout, int read_timeout,
+			HttpCallback callback, String... headers) throws IOException {
+		return POST(proxy, url, params, connect_timeout, read_timeout,
+				callback, DEFAULT_PERSIST, headers);
 	}
 
 	public static String POST(String url, Map<String, String> params,
@@ -770,15 +813,22 @@ public abstract class HttpFetcher {
 
 	public static String text(Proxy proxy, String method, String url,
 			int connect_timeout, int read_timeout, HttpCallback callback,
-			String... headers) throws IOException {
+			boolean persist, String... headers) throws IOException {
 
 		HttpURLConnection conn = connect(proxy, method, url, connect_timeout,
-				read_timeout, headers);
+				read_timeout, persist, headers);
 
 		if (callback != null) {
 			callback.connection(conn);
 		}
 
-		return content(conn);
+		return content(conn, persist);
+	}
+
+	public static String text(Proxy proxy, String method, String url,
+			int connect_timeout, int read_timeout, HttpCallback callback,
+			String... headers) throws IOException {
+		return text(proxy, method, url, connect_timeout, read_timeout,
+				callback, true, headers);
 	}
 }
