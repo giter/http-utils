@@ -105,7 +105,7 @@ public class HttpUtil {
 				headers().toArray(new String[headers().size()]));
 	}
 
-	private Proxy proxy() {
+	public Proxy proxy() {
 
 		Proxy _proxy = proxy;
 
