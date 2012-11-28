@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Better wrapper for HttpFetcher
+ * 
+ * @author giter
+ * 
+ */
 public class HttpUtil {
 
 	private Proxy proxy = null;
