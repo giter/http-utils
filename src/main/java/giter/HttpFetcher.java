@@ -76,7 +76,7 @@ public abstract class HttpFetcher {
 
 	public static void addCookie(String domain, String key, String value) {
 
-		domain = domain.replaceAll("^.", "");
+		domain = domain.replaceAll("^\\.", "");
 
 		Map<String, String> cookies = COOKIES.get(domain);
 
