@@ -16,6 +16,7 @@ public class HttpUtil {
 	private List<String> headers = null;
 	private HttpCallback callback = null;
 	private boolean persist = true;
+	private Proxier proxier = null;
 
 	private List<String> headers() {
 
@@ -39,6 +40,11 @@ public class HttpUtil {
 
 	public HttpUtil proxy(Proxy proxy) {
 		this.proxy = proxy;
+		return this;
+	}
+
+	public HttpUtil proxier(Proxier proxier) {
+		this.proxier = proxier;
 		return this;
 	}
 
@@ -72,21 +78,35 @@ public class HttpUtil {
 	}
 
 	public String GET(String url) throws IOException {
-		return HttpFetcher.GET(proxy, url, connectTimeOut, readTimeOut,
+
+		return HttpFetcher.GET(proxy(), url, connectTimeOut, readTimeOut,
 				callback, persist,
 				headers().toArray(new String[headers().size()]));
 	}
 
 	public String POST(String url, Map<String, String> params)
 			throws IOException {
-		return HttpFetcher.POST(proxy, url, params, connectTimeOut,
+
+		return HttpFetcher.POST(proxy(), url, params, connectTimeOut,
 				readTimeOut, callback, persist,
 				headers().toArray(new String[headers().size()]));
 	}
 
 	public String DELETE(String url) throws IOException {
-		return HttpFetcher.DELETE(proxy, url, connectTimeOut, readTimeOut,
+
+		return HttpFetcher.DELETE(proxy(), url, connectTimeOut, readTimeOut,
 				callback, persist,
 				headers().toArray(new String[headers().size()]));
+	}
+
+	private Proxy proxy() {
+
+		Proxy _proxy = proxy;
+
+		if (proxier != null) {
+			_proxy = proxier.get();
+		}
+
+		return _proxy;
 	}
 }
