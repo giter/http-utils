@@ -47,33 +47,6 @@ public final class HttpUtil {
 		return this;
 	}
 
-	/**
-	 * Set URL referer
-	 * 
-	 * @param url
-	 *            URL Referer to set
-	 * @return this object
-	 */
-	public HttpUtil referer(String url) {
-		headers().put("Referer", url);
-		return this;
-	}
-
-	/**
-	 * Set single cookie to request
-	 * 
-	 * @param key
-	 *            cookie key
-	 * @param value
-	 *            cookie value
-	 * @return this object
-	 */
-	public HttpUtil cookie(String key, String value) {
-		cookies().put(key, value);
-		headers().put("Cookie", cookiesString());
-		return this;
-	}
-
 	public HttpUtil callback(HttpCallback hc) {
 		this.hc = hc;
 		return this;
@@ -103,6 +76,63 @@ public final class HttpUtil {
 	public HttpUtil connect(int timeout) {
 		this.connectTimeOut = timeout;
 		return this;
+	}
+
+	/**
+	 * Set single cookie to request
+	 * 
+	 * @param key
+	 *            cookie key
+	 * @param value
+	 *            cookie value
+	 * @return this object
+	 */
+	public HttpUtil cookie(String key, String value) {
+		cookies().put(key, value);
+		headers().put("Cookie", cookiesString());
+		return this;
+	}
+
+	private LinkedHashMap<String, String> cookies() {
+
+		if (cookies == null) {
+			synchronized (HttpUtil.class) {
+				if (cookies == null) {
+					cookies = new LinkedHashMap<>();
+				}
+			}
+		}
+
+		return cookies;
+	}
+
+	private String cookiesString() {
+
+		LinkedHashMap<String, String> cookies = cookies();
+
+		if (cookies.size() > 0) {
+
+			StringBuilder sb = new StringBuilder();
+			boolean first = true;
+
+			for (Map.Entry<String, String> kv : cookies.entrySet()) {
+
+				if (first) {
+					first = false;
+				} else {
+					sb.append(";");
+				}
+
+				sb.append(kv.getKey());
+				sb.append("=");
+				sb.append(kv.getValue());
+			}
+
+			return sb.toString();
+		}
+
+		return null;
+
 	}
 
 	public String DELETE(String url) throws IOException {
@@ -187,46 +217,14 @@ public final class HttpUtil {
 		return headers;
 	}
 
-	private LinkedHashMap<String, String> cookies() {
+	@SafeVarargs
+	final public HttpUtil headers(Map.Entry<String, String>... headers) {
 
-		if (cookies == null) {
-			synchronized (HttpUtil.class) {
-				if (cookies == null) {
-					cookies = new LinkedHashMap<>();
-				}
-			}
+		for (Map.Entry<String, String> header : headers) {
+			headers().put(header.getKey(), header.getValue());
 		}
 
-		return cookies;
-	}
-
-	private String cookiesString() {
-
-		LinkedHashMap<String, String> cookies = cookies();
-
-		if (cookies.size() > 0) {
-
-			StringBuilder sb = new StringBuilder();
-			boolean first = true;
-
-			for (Map.Entry<String, String> kv : cookies.entrySet()) {
-
-				if (first) {
-					first = false;
-				} else {
-					sb.append(";");
-				}
-
-				sb.append(kv.getKey());
-				sb.append("=");
-				sb.append(kv.getValue());
-			}
-
-			return sb.toString();
-		}
-
-		return null;
-
+		return this;
 	}
 
 	private String[] headersArray() {
@@ -242,16 +240,6 @@ public final class HttpUtil {
 		}
 
 		return ls;
-	}
-
-	@SafeVarargs
-	final public HttpUtil headers(Map.Entry<String, String>... headers) {
-
-		for (Map.Entry<String, String> header : headers) {
-			headers().put(header.getKey(), header.getValue());
-		}
-
-		return this;
 	}
 
 	public HttpUtil persist(boolean persist) {
@@ -302,6 +290,18 @@ public final class HttpUtil {
 
 	public HttpUtil read(int timeout) {
 		this.readTimeOut = timeout;
+		return this;
+	}
+
+	/**
+	 * Set URL referer
+	 * 
+	 * @param url
+	 *            URL Referer to set
+	 * @return this object
+	 */
+	public HttpUtil referer(String url) {
+		headers().put("Referer", url);
 		return this;
 	}
 }
