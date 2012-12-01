@@ -35,6 +35,11 @@ public final class HttpUtil {
 	private HttpUtil() {
 	}
 
+	public HttpUtil agent(String agent) {
+		headers().add("User-Agent: " + agent);
+		return this;
+	}
+
 	public HttpUtil callback(HttpCallback hc) {
 		this.hc = hc;
 		return this;
