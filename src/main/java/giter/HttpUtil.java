@@ -106,6 +106,18 @@ public final class HttpUtil {
 		return this;
 	}
 
+	@SafeVarargs
+	final public HttpUtil cookie(Map.Entry<String, String>... cookies) {
+
+		for (Map.Entry<String, String> cookie : cookies) {
+			cookies().put(cookie.getKey(), cookie.getValue());
+		}
+
+		headers().put("Cookie", cookiesString());
+
+		return this;
+	}
+
 	private LinkedHashMap<String, String> cookies() {
 
 		if (cookies == null) {
