@@ -5,8 +5,7 @@ import giter.HttpFetcher.HttpCallback;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,7 +24,8 @@ public final class HttpUtil {
 	private Proxy proxy = null;
 	private int connectTimeOut = HttpFetcher.DEFAULT_CONNECT_TIMEOUT;
 	private int readTimeOut = HttpFetcher.DEFAULT_READ_TIMEOUT;
-	private List<String> headers = null;
+	private LinkedHashMap<String, String> headers = null;
+	private LinkedHashMap<String, String> cookies = null;
 	private HttpCallback hc = null;
 	private boolean persist = true;
 	private boolean follow = true;
@@ -36,7 +36,18 @@ public final class HttpUtil {
 	}
 
 	public HttpUtil agent(String agent) {
-		headers().add("User-Agent: " + agent);
+		headers().put("User-Agent", agent);
+		return this;
+	}
+
+	public HttpUtil referer(String url) {
+		headers().put("Referer", url);
+		return this;
+	}
+
+	public HttpUtil cookie(String key, String value) {
+		cookies().put(key, value);
+		headers().put("Cookie", cookiesString());
 		return this;
 	}
 
@@ -75,26 +86,23 @@ public final class HttpUtil {
 
 		if (follow) {
 			final AtomicReference<String> rtext = new AtomicReference<String>();
-			String text = HttpFetcher
-					.DELETE(proxy(), url, connectTimeOut, readTimeOut,
-							new HttpCallback() {
-								@Override
-								public void connection(HttpURLConnection conn)
-										throws IOException {
-									String loc = check(conn);
-									if (loc != null) {
-										rtext.set(GET(loc));
-									}
-								}
-							}, persist,
-							headers().toArray(new String[headers().size()]));
+			String text = HttpFetcher.DELETE(proxy(), url, connectTimeOut,
+					readTimeOut, new HttpCallback() {
+						@Override
+						public void connection(HttpURLConnection conn)
+								throws IOException {
+							String loc = check(conn);
+							if (loc != null) {
+								rtext.set(GET(loc));
+							}
+						}
+					}, persist, headersArray());
 
 			return rtext.get() != null ? rtext.get() : text;
 
 		} else {
 			return HttpFetcher.DELETE(proxy(), url, connectTimeOut,
-					readTimeOut, hc, persist,
-					headers().toArray(new String[headers().size()]));
+					readTimeOut, hc, persist, headersArray());
 		}
 	}
 
@@ -128,8 +136,7 @@ public final class HttpUtil {
 
 		do {
 			text = HttpFetcher.GET(proxy, url, connectTimeOut, readTimeOut,
-					getConn, persist,
-					headers().toArray(new String[headers().size()]));
+					getConn, persist, headersArray());
 			url = check(ref.get());
 		} while (follow && (--j) > 0 && url != null);
 
@@ -144,12 +151,12 @@ public final class HttpUtil {
 		return text;
 	}
 
-	private List<String> headers() {
+	private LinkedHashMap<String, String> headers() {
 
 		if (headers == null) {
 			synchronized (HttpUtil.class) {
 				if (headers == null) {
-					headers = new ArrayList<String>();
+					headers = new LinkedHashMap<>();
 				}
 			}
 		}
@@ -157,10 +164,68 @@ public final class HttpUtil {
 		return headers;
 	}
 
-	public HttpUtil headers(String... headers) {
+	private LinkedHashMap<String, String> cookies() {
 
-		for (String header : headers) {
-			headers().add(header);
+		if (cookies == null) {
+			synchronized (HttpUtil.class) {
+				if (cookies == null) {
+					cookies = new LinkedHashMap<>();
+				}
+			}
+		}
+
+		return cookies;
+	}
+
+	private String cookiesString() {
+
+		LinkedHashMap<String, String> cookies = cookies();
+
+		if (cookies.size() > 0) {
+
+			StringBuilder sb = new StringBuilder();
+			boolean first = true;
+
+			for (Map.Entry<String, String> kv : cookies.entrySet()) {
+
+				if (first) {
+					first = false;
+				} else {
+					sb.append(";");
+				}
+
+				sb.append(kv.getKey());
+				sb.append("=");
+				sb.append(kv.getValue());
+			}
+
+			return sb.toString();
+		}
+
+		return null;
+
+	}
+
+	private String[] headersArray() {
+
+		LinkedHashMap<String, String> headers = headers();
+
+		String[] ls = new String[headers.size()];
+
+		int i = 0;
+
+		for (Map.Entry<String, String> header : headers.entrySet()) {
+			ls[i++] = (header.getKey() + ": " + header.getValue());
+		}
+
+		return ls;
+	}
+
+	@SafeVarargs
+	final public HttpUtil headers(Map.Entry<String, String>... headers) {
+
+		for (Map.Entry<String, String> header : headers) {
+			headers().put(header.getKey(), header.getValue());
 		}
 
 		return this;
@@ -178,26 +243,23 @@ public final class HttpUtil {
 
 			final AtomicReference<String> rtext = new AtomicReference<String>();
 
-			String text = HttpFetcher
-					.POST(proxy(), url, params, connectTimeOut, readTimeOut,
-							new HttpCallback() {
-								@Override
-								public void connection(HttpURLConnection conn)
-										throws IOException {
-									String loc = check(conn);
-									if (loc != null) {
-										rtext.set(GET(loc));
-									}
-								}
-							}, persist,
-							headers().toArray(new String[headers().size()]));
+			String text = HttpFetcher.POST(proxy(), url, params,
+					connectTimeOut, readTimeOut, new HttpCallback() {
+						@Override
+						public void connection(HttpURLConnection conn)
+								throws IOException {
+							String loc = check(conn);
+							if (loc != null) {
+								rtext.set(GET(loc));
+							}
+						}
+					}, persist, headersArray());
 
 			return rtext.get() != null ? rtext.get() : text;
 
 		} else {
 			return HttpFetcher.POST(proxy(), url, params, connectTimeOut,
-					readTimeOut, hc, persist,
-					headers().toArray(new String[headers().size()]));
+					readTimeOut, hc, persist, headersArray());
 		}
 	}
 
