@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>giter</groupId>
-	<artifactId>simple-http-fetcher</artifactId>
+	<artifactId>http-utils</artifactId>
 	<version>0.3</version>
 	
 	<build>
