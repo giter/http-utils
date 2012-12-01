@@ -35,16 +35,39 @@ public final class HttpUtil {
 	private HttpUtil() {
 	}
 
+	/**
+	 * Set User-Agent
+	 * 
+	 * @param agent
+	 *            User-Agent to set
+	 * @return this object
+	 */
 	public HttpUtil agent(String agent) {
 		headers().put("User-Agent", agent);
 		return this;
 	}
 
+	/**
+	 * Set URL referer
+	 * 
+	 * @param url
+	 *            URL Referer to set
+	 * @return this object
+	 */
 	public HttpUtil referer(String url) {
 		headers().put("Referer", url);
 		return this;
 	}
 
+	/**
+	 * Set single cookie to request
+	 * 
+	 * @param key
+	 *            cookie key
+	 * @param value
+	 *            cookie value
+	 * @return this object
+	 */
 	public HttpUtil cookie(String key, String value) {
 		cookies().put(key, value);
 		headers().put("Cookie", cookiesString());
