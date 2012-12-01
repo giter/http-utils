@@ -46,20 +46,19 @@ public final class HttpUtil {
 	 * @param conn
 	 * @return the HTTP redirection url or nil
 	 * @throws IOException
-	 *             throw if when code >= 500 || code < 200
+	 *             throw if when code != [ 301, 302, 200 ]
 	 */
 	private String check(final HttpURLConnection conn) throws IOException {
-
-		if (conn.getResponseCode() >= 300 && conn.getResponseCode() < 400) {
+		switch (conn.getResponseCode()) {
+		case HttpURLConnection.HTTP_MOVED_PERM:
+		case HttpURLConnection.HTTP_MOVED_TEMP:
 			return conn.getHeaderField("Location");
-		}
-
-		if (conn.getResponseCode() >= 400 || conn.getResponseCode() < 200) {
+		case HttpURLConnection.HTTP_OK:
+			return null;
+		default:
 			throw new IOException(String.format("Error response code %d",
 					conn.getResponseCode()));
 		}
-
-		return null;
 	}
 
 	public HttpUtil connect(int timeout) {
@@ -94,6 +93,13 @@ public final class HttpUtil {
 		}
 	}
 
+	/**
+	 * set whether util should follow http 301/302 moved command
+	 * 
+	 * @param follow
+	 *            boolean
+	 * @return this util it self
+	 */
 	public HttpUtil follow(boolean follow) {
 		this.follow = follow;
 		return this;
@@ -113,7 +119,7 @@ public final class HttpUtil {
 		Proxy proxy = proxy();
 
 		String text;
-		int j = follow ? 4 : 2;
+		int j = follow ? 5 : 2;
 
 		do {
 			text = HttpFetcher.GET(proxy, url, connectTimeOut, readTimeOut,
@@ -123,7 +129,7 @@ public final class HttpUtil {
 		} while (follow && (--j) > 0 && url != null);
 
 		if (follow && j <= 0 && url != null) {
-			throw new IOException("Redirection!");
+			throw new IOException("May redirection loops!");
 		}
 
 		if (hc != null) {
