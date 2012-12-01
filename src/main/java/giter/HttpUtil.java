@@ -3,10 +3,12 @@ package giter;
 import giter.HttpFetcher.HttpCallback;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Better wrapper for HttpFetcher
@@ -14,15 +16,122 @@ import java.util.Map;
  * @author giter
  * 
  */
-public class HttpUtil {
+public final class HttpUtil {
+
+	public static HttpUtil instance() {
+		return new HttpUtil();
+	}
 
 	private Proxy proxy = null;
 	private int connectTimeOut = HttpFetcher.DEFAULT_CONNECT_TIMEOUT;
 	private int readTimeOut = HttpFetcher.DEFAULT_READ_TIMEOUT;
 	private List<String> headers = null;
-	private HttpCallback callback = null;
+	private HttpCallback hc = null;
 	private boolean persist = true;
+	private boolean follow = true;
+
 	private Proxier proxier = null;
+
+	private HttpUtil() {
+	}
+
+	public HttpUtil callback(HttpCallback hc) {
+		this.hc = hc;
+		return this;
+	}
+
+	/**
+	 * Check response code
+	 * 
+	 * @param conn
+	 * @return the HTTP redirection url or nil
+	 * @throws IOException
+	 *             throw if when code >= 500 || code < 200
+	 */
+	private String check(final HttpURLConnection conn) throws IOException {
+
+		if (conn.getResponseCode() >= 300 && conn.getResponseCode() < 400) {
+			return conn.getHeaderField("Location");
+		}
+
+		if (conn.getResponseCode() >= 400 || conn.getResponseCode() < 200) {
+			throw new IOException(String.format("Error response code %d",
+					conn.getResponseCode()));
+		}
+
+		return null;
+	}
+
+	public HttpUtil connect(int timeout) {
+		this.connectTimeOut = timeout;
+		return this;
+	}
+
+	public String DELETE(String url) throws IOException {
+
+		if (follow) {
+			final AtomicReference<String> rtext = new AtomicReference<String>();
+			String text = HttpFetcher
+					.DELETE(proxy(), url, connectTimeOut, readTimeOut,
+							new HttpCallback() {
+								@Override
+								public void connection(HttpURLConnection conn)
+										throws IOException {
+									String loc = check(conn);
+									if (loc != null) {
+										rtext.set(GET(loc));
+									}
+								}
+							}, persist,
+							headers().toArray(new String[headers().size()]));
+
+			return rtext.get() != null ? rtext.get() : text;
+
+		} else {
+			return HttpFetcher.DELETE(proxy(), url, connectTimeOut,
+					readTimeOut, hc, persist,
+					headers().toArray(new String[headers().size()]));
+		}
+	}
+
+	public HttpUtil follow(boolean follow) {
+		this.follow = follow;
+		return this;
+	}
+
+	public String GET(String url) throws IOException {
+
+		final AtomicReference<HttpURLConnection> ref = new AtomicReference<>();
+
+		HttpCallback getConn = new HttpCallback() {
+			@Override
+			public void connection(HttpURLConnection conn) throws IOException {
+				ref.set(conn);
+			}
+		};
+
+		Proxy proxy = proxy();
+
+		String text;
+		int j = follow ? 4 : 2;
+
+		do {
+			text = HttpFetcher.GET(proxy, url, connectTimeOut, readTimeOut,
+					getConn, persist,
+					headers().toArray(new String[headers().size()]));
+			url = check(ref.get());
+		} while (follow && (--j) > 0 && url != null);
+
+		if (follow && j <= 0 && url != null) {
+			throw new IOException("Redirection!");
+		}
+
+		if (hc != null) {
+			hc.connection(ref.get());
+		}
+
+		return text;
+	}
 
 	private List<String> headers() {
 
@@ -37,38 +146,6 @@ public class HttpUtil {
 		return headers;
 	}
 
-	private HttpUtil() {
-	}
-
-	public static HttpUtil instance() {
-		return new HttpUtil();
-	}
-
-	public HttpUtil proxy(Proxy proxy) {
-		this.proxy = proxy;
-		return this;
-	}
-
-	public HttpUtil proxier(Proxier proxier) {
-		this.proxier = proxier;
-		return this;
-	}
-
-	public HttpUtil connect(int timeout) {
-		this.connectTimeOut = timeout;
-		return this;
-	}
-
-	public HttpUtil read(int timeout) {
-		this.readTimeOut = timeout;
-		return this;
-	}
-
-	public HttpUtil persist(boolean persist) {
-		this.persist = persist;
-		return this;
-	}
-
 	public HttpUtil headers(String... headers) {
 
 		for (String header : headers) {
@@ -78,41 +155,57 @@ public class HttpUtil {
 		return this;
 	}
 
-	public HttpUtil callback(HttpCallback callback) {
-		this.callback = callback;
+	public HttpUtil persist(boolean persist) {
+		this.persist = persist;
 		return this;
-	}
-
-	public String GET(String url) throws IOException {
-
-		return HttpFetcher.GET(proxy(), url, connectTimeOut, readTimeOut,
-				callback, persist,
-				headers().toArray(new String[headers().size()]));
 	}
 
 	public String POST(String url, Map<String, String> params)
 			throws IOException {
 
-		return HttpFetcher.POST(proxy(), url, params, connectTimeOut,
-				readTimeOut, callback, persist,
-				headers().toArray(new String[headers().size()]));
+		if (follow) {
+
+			final AtomicReference<String> rtext = new AtomicReference<String>();
+
+			String text = HttpFetcher
+					.POST(proxy(), url, params, connectTimeOut, readTimeOut,
+							new HttpCallback() {
+								@Override
+								public void connection(HttpURLConnection conn)
+										throws IOException {
+									String loc = check(conn);
+									if (loc != null) {
+										rtext.set(GET(loc));
+									}
+								}
+							}, persist,
+							headers().toArray(new String[headers().size()]));
+
+			return rtext.get() != null ? rtext.get() : text;
+
+		} else {
+			return HttpFetcher.POST(proxy(), url, params, connectTimeOut,
+					readTimeOut, hc, persist,
+					headers().toArray(new String[headers().size()]));
+		}
 	}
 
-	public String DELETE(String url) throws IOException {
-
-		return HttpFetcher.DELETE(proxy(), url, connectTimeOut, readTimeOut,
-				callback, persist,
-				headers().toArray(new String[headers().size()]));
+	public HttpUtil proxier(Proxier proxier) {
+		this.proxier = proxier;
+		return this;
 	}
 
 	public Proxy proxy() {
+		return proxier != null ? proxier.get() : proxy;
+	}
 
-		Proxy _proxy = proxy;
+	public HttpUtil proxy(Proxy proxy) {
+		this.proxy = proxy;
+		return this;
+	}
 
-		if (proxier != null) {
-			_proxy = proxier.get();
-		}
-
-		return _proxy;
+	public HttpUtil read(int timeout) {
+		this.readTimeOut = timeout;
+		return this;
 	}
 }
