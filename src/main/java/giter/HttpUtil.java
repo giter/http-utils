@@ -47,6 +47,12 @@ public final class HttpUtil {
 		return this;
 	}
 
+	/**
+	 * callback to get HttpURLConnection
+	 * 
+	 * @param hc
+	 * @return this object
+	 */
 	public HttpUtil callback(HttpCallback hc) {
 		this.hc = hc;
 		return this;
@@ -73,6 +79,13 @@ public final class HttpUtil {
 		}
 	}
 
+	/**
+	 * connect timeout
+	 * 
+	 * @param timeout
+	 *            in ms
+	 * @return this object
+	 */
 	public HttpUtil connect(int timeout) {
 		this.connectTimeOut = timeout;
 		return this;
@@ -135,6 +148,14 @@ public final class HttpUtil {
 
 	}
 
+	/**
+	 * delete method
+	 * 
+	 * @param url
+	 *            url to delete
+	 * @return this object
+	 * @throws IOException
+	 */
 	public String DELETE(String url) throws IOException {
 
 		if (follow) {
@@ -171,6 +192,14 @@ public final class HttpUtil {
 		return this;
 	}
 
+	/**
+	 * GET url
+	 * 
+	 * @param url
+	 *            to GET
+	 * @return this object
+	 * @throws IOException
+	 */
 	public String GET(String url) throws IOException {
 
 		final AtomicReference<HttpURLConnection> ref = new AtomicReference<>();
@@ -217,6 +246,13 @@ public final class HttpUtil {
 		return headers;
 	}
 
+	/**
+	 * directly put headers
+	 * 
+	 * @param headers
+	 *            headers to put
+	 * @return this object
+	 */
 	@SafeVarargs
 	final public HttpUtil headers(Map.Entry<String, String>... headers) {
 
@@ -242,11 +278,27 @@ public final class HttpUtil {
 		return ls;
 	}
 
+	/**
+	 * persist cookies
+	 * 
+	 * @param persist
+	 * @return this object
+	 */
 	public HttpUtil persist(boolean persist) {
 		this.persist = persist;
 		return this;
 	}
 
+	/**
+	 * POST url
+	 * 
+	 * @param url
+	 *            url to POST
+	 * @param params
+	 *            params to POST
+	 * @return this object
+	 * @throws IOException
+	 */
 	public String POST(String url, Map<String, String> params)
 			throws IOException {
 
@@ -274,20 +326,45 @@ public final class HttpUtil {
 		}
 	}
 
+	/**
+	 * Proxier to get proxy for each single request
+	 * 
+	 * @param proxier
+	 * @return this object
+	 * @see Proxier
+	 */
 	public HttpUtil proxier(Proxier proxier) {
 		this.proxier = proxier;
 		return this;
 	}
 
+	/**
+	 * get proxy vars
+	 * 
+	 * @return proxier.get() || proxy
+	 */
 	public Proxy proxy() {
 		return proxier != null ? proxier.get() : proxy;
 	}
 
+	/**
+	 * Fix proxy for each request
+	 * 
+	 * @param proxy
+	 * @return this object
+	 */
 	public HttpUtil proxy(Proxy proxy) {
 		this.proxy = proxy;
 		return this;
 	}
 
+	/**
+	 * read timeout
+	 * 
+	 * @param timeout
+	 *            timeout in ms
+	 * @return this object
+	 */
 	public HttpUtil read(int timeout) {
 		this.readTimeOut = timeout;
 		return this;
