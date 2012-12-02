@@ -48,6 +48,21 @@ public final class HttpUtil {
 	}
 
 	/**
+	 * Http Basic Realm
+	 * 
+	 * @param username
+	 *            username
+	 * @param password
+	 *            password
+	 * @return this object
+	 */
+	public HttpUtil auth(String username, String password) {
+		headers().put("Authorization",
+				"Basic " + B64Code.decode(username + ":" + password));
+		return this;
+	}
+
+	/**
 	 * callback to get HttpURLConnection
 	 * 
 	 * @param hc

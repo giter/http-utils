@@ -5,7 +5,7 @@
 	<groupId>giter</groupId>
 	<artifactId>http-utils</artifactId>
 	<version>0.3</version>
-	
+
 	<build>
 		<defaultGoal>install</defaultGoal>
 		<plugins>
@@ -55,5 +55,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>
