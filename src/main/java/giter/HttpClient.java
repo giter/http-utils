@@ -1,6 +1,7 @@
 package giter;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URLConnection;
 import java.util.AbstractMap.SimpleEntry;
@@ -13,7 +14,6 @@ import java.util.Map.Entry;
  * Better wrapper for LLHTTPClient
  * 
  * @author giter
- * 
  */
 public final class HttpClient {
 
@@ -30,6 +30,7 @@ public final class HttpClient {
 	private LinkedHashMap<String, String> cookies = null;
 
 	private boolean persistCookies = true;
+	private boolean follow;
 
 	public HttpClient() {
 	}
@@ -88,18 +89,6 @@ public final class HttpClient {
 		return this;
 	}
 
-	@SafeVarargs
-	final public HttpClient cookie(SimpleEntry<String, String>... cookies) {
-
-		for (Map.Entry<String, String> cookie : cookies) {
-			cookies().put(cookie.getKey(), cookie.getValue());
-		}
-
-		headers().put("Cookie", cookiesString());
-
-		return this;
-	}
-
 	private LinkedHashMap<String, String> cookies() {
 
 		if (cookies == null) {
@@ -142,6 +131,21 @@ public final class HttpClient {
 
 	}
 
+	public String check(URLConnection c) throws IOException {
+
+		HttpURLConnection conn = (HttpURLConnection) c;
+
+		switch (conn.getResponseCode()) {
+		case HttpURLConnection.HTTP_MOVED_PERM:
+		case HttpURLConnection.HTTP_MOVED_TEMP:
+			return conn.getHeaderField("Location");
+		case HttpURLConnection.HTTP_OK:
+			return null;
+		default:
+			throw new IOException();
+		}
+	}
+
 	/**
 	 * delete method
 	 * 
@@ -150,12 +154,22 @@ public final class HttpClient {
 	 * @return this object
 	 * @throws IOException
 	 */
-	public Entry<URLConnection, String> DELETE(String url) throws IOException {
+	public SimpleEntry<URLConnection, String> DELETE(String url)
+			throws IOException {
 
-		Entry<URLConnection, String> r = store(LLHttpClient.DELETE(proxy(),
-				url, connectTimeOut, readTimeOut, headersArray()));
+		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.DELETE(
+				proxy(), url, connectTimeOut, readTimeOut, headers()));
+
+		if ((url = check(r.getKey())) != null) {
+			return GET(url);
+		}
+
 		return r;
+	}
 
+	public HttpClient follow(boolean follow) {
+		this.follow = follow;
+		return this;
 	}
 
 	/**
@@ -166,9 +180,20 @@ public final class HttpClient {
 	 * @return this object
 	 * @throws IOException
 	 */
-	public Entry<URLConnection, String> GET(String url) throws IOException {
-		return store(LLHttpClient.GET(proxy(), url, connectTimeOut,
-				readTimeOut, headersArray()));
+	public SimpleEntry<URLConnection, String> GET(String url)
+			throws IOException {
+
+		int redirects = 0;
+		SimpleEntry<URLConnection, String> r;
+
+		do {
+			r = cookies(LLHttpClient.GET(proxy(), url, connectTimeOut,
+					readTimeOut, headers()));
+			url = check(r.getKey());
+			redirects++;
+		} while (follow && url != null && redirects < 5);
+
+		return r;
 	}
 
 	private LinkedHashMap<String, String> headers() {
@@ -185,35 +210,15 @@ public final class HttpClient {
 	}
 
 	/**
-	 * directly put headers
+	 * directly put header
 	 * 
-	 * @param headers
-	 *            headers to put
+	 * @param header
+	 *            header to put
 	 * @return this object
 	 */
-	@SafeVarargs
-	final public HttpClient headers(Map.Entry<String, String>... headers) {
-
-		for (Map.Entry<String, String> header : headers) {
-			headers().put(header.getKey(), header.getValue());
-		}
-
+	final public HttpClient header(Map.Entry<String, String> header) {
+		headers().put(header.getKey(), header.getValue());
 		return this;
-	}
-
-	private String[] headersArray() {
-
-		LinkedHashMap<String, String> headers = headers();
-
-		String[] ls = new String[headers.size()];
-
-		int i = 0;
-
-		for (Map.Entry<String, String> header : headers.entrySet()) {
-			ls[i++] = (header.getKey() + ": " + header.getValue());
-		}
-
-		return ls;
 	}
 
 	/**
@@ -239,8 +244,13 @@ public final class HttpClient {
 	 */
 	public SimpleEntry<URLConnection, String> POST(String url,
 			Map<String, String> params) throws IOException {
-		return store(LLHttpClient.POST(proxy(), url, params, connectTimeOut,
-				readTimeOut, headersArray()));
+		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.POST(
+				proxy(), url, params, connectTimeOut, readTimeOut, headers()));
+		if ((url = check(r.getKey())) != null) {
+			return GET(url);
+		}
+
+		return r;
 	}
 
 	/**
@@ -299,7 +309,7 @@ public final class HttpClient {
 		return this;
 	}
 
-	protected SimpleEntry<URLConnection, String> store(
+	protected SimpleEntry<URLConnection, String> cookies(
 			SimpleEntry<URLConnection, String> r) {
 
 		final URLConnection conn = r.getKey();

@@ -12,7 +12,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,7 +31,7 @@ public abstract class LLHttpClient {
 		setMaxConnections(30);
 	}
 
-	public static final String DEFAULT_CHARSET = "UTF-8";
+	public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 	public final static Pattern CHARSET_PATTERN = Pattern
 			.compile(
 					"['\" ;]charset\\s*=([^'\" ]+)[ '\"]|charset\\s*=\\s*\"?([^'\\\" ]+)|['\" ;]encoding\\s*=([^'\" ]+)[ '\"]|encoding\\s*=\\s*\"?([^'\\\" ]+)",
@@ -71,11 +70,15 @@ public abstract class LLHttpClient {
 	}
 
 	protected static URLConnection connect(Proxy proxy, String url,
-			int connect_timeout, int read_timeout, String... headers)
+			int connect_timeout, int read_timeout, Map<String, String> headers)
 			throws IOException {
 
 		URLConnection conn = new URL(url)
 				.openConnection(proxy == null ? Proxy.NO_PROXY : proxy);
+
+		if (conn instanceof HttpURLConnection) {
+			((HttpURLConnection) conn).setInstanceFollowRedirects(false);
+		}
 
 		conn.setConnectTimeout(connect_timeout);
 		conn.setReadTimeout(read_timeout);
@@ -84,50 +87,8 @@ public abstract class LLHttpClient {
 		conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
 		conn.setRequestProperty("Accept-Language", "zh-cn,zh;q=0.5");
 
-		Map<String, String> cookies = new LinkedHashMap<String, String>();
-
-		for (String header : headers) {
-			String[] pair = header.split(":", 2);
-			if (pair.length == 2) {
-
-				switch (pair[0].trim().toLowerCase()) {
-				case "cookie":
-					for (String cookie : pair[1].split(":")) {
-						if (cookie.contains("=")) {
-							String[] kv = cookie.split("=", 2);
-							cookies.put(kv[0], kv[1]);
-						}
-					}
-					break;
-				case "referer":
-					break;
-				case "user-agent":
-					break;
-				default:
-					conn.setRequestProperty(pair[0], pair[1]);
-				}
-			}
-		}
-
-		if (cookies.size() > 0) {
-
-			StringBuilder sb = new StringBuilder(100);
-			boolean first = true;
-
-			for (Entry<String, String> cookie : cookies.entrySet()) {
-
-				if (!first) {
-					sb.append("; ");
-				} else {
-					first = false;
-				}
-
-				sb.append(cookie.getKey());
-				sb.append('=');
-				sb.append(cookie.getValue());
-			}
-
-			conn.setRequestProperty("Cookie", sb.toString());
+		for (Entry<String, String> h : headers.entrySet()) {
+			conn.setRequestProperty(h.getKey(), h.getValue());
 		}
 
 		return conn;
@@ -173,17 +134,14 @@ public abstract class LLHttpClient {
 				}
 			}
 
-			if (cs == null || !supported(cs)) {
-				cs = DEFAULT_CHARSET;
-			}
-
-			return new SimpleEntry<>(conn, new String(bytes, cs));
+			return new SimpleEntry<>(conn, new String(bytes, cs == null
+					|| !supported(cs) ? DEFAULT_CHARSET : Charset.forName(cs)));
 		}
 	}
 
 	public static SimpleEntry<URLConnection, String> DELETE(Proxy proxy,
 			String url, int connect_timeout, int read_timeout,
-			String... headers) throws IOException {
+			Map<String, String> headers) throws IOException {
 		return content(method(
 				connect(proxy, url, connect_timeout, read_timeout, headers),
 				"DELETE"));
@@ -218,7 +176,7 @@ public abstract class LLHttpClient {
 
 	public static SimpleEntry<URLConnection, String> GET(Proxy proxy,
 			String url, int connect_timeout, int read_timeout,
-			String... headers) throws IOException {
+			Map<String, String> headers) throws IOException {
 		return content(connect(proxy, url, connect_timeout, read_timeout,
 				headers));
 	}
@@ -298,7 +256,7 @@ public abstract class LLHttpClient {
 
 	public static SimpleEntry<URLConnection, String> POST(Proxy proxy,
 			String url, Map<String, String> params, int connect_timeout,
-			int read_timeout, String... headers) throws IOException {
+			int read_timeout, Map<String, String> headers) throws IOException {
 		return content(postQuery(
 				method(connect(proxy, url, connect_timeout, read_timeout,
 						headers), "POST"), params));
@@ -307,7 +265,7 @@ public abstract class LLHttpClient {
 	public static Map.Entry<URLConnection, String> POST(Proxy proxy,
 			String url, Map<String, String> params,
 			List<Entry<String, InputStream>> files, int connect_timeout,
-			int read_timeout, String... headers) throws IOException {
+			int read_timeout, Map<String, String> headers) throws IOException {
 		return content(postMultipart(
 				method(connect(proxy, url, connect_timeout, read_timeout,
 						headers), "POST"), params, files));
