@@ -44,18 +44,10 @@ public abstract class LLHttpClient {
 
 		if (matcher.find()) {
 
-			s = matcher.group(1);
-
-			if (s == null) {
-				s = matcher.group(2);
-			}
-
-			if (s == null) {
-				s = matcher.group(3);
-			}
-
-			if (s == null) {
-				s = matcher.group(4);
+			for (int i = 0; i < matcher.groupCount(); i++) {
+				s = matcher.group(i + 1);
+				if (s != null)
+					break;
 			}
 
 			// 处理未在IANA列表中的字符集，如x-gbk
