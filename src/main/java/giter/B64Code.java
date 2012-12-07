@@ -9,7 +9,7 @@ import java.io.UnsupportedEncodingException;
  * Base64 Util
  */
 public class B64Code {
-
+ 
 	static final char pad = '=';
 
 	static final char[] rfc1421alphabet = { 'A', 'B', 'C', 'D', 'E', 'F', 'G',
@@ -20,7 +20,7 @@ public class B64Code {
 			'7', '8', '9', '+', '/' };
 
 	static final byte[] rfc1421nibbles;
-
+ 
 	static {
 		rfc1421nibbles = new byte[256];
 		for (int i = 0; i < 256; i++)

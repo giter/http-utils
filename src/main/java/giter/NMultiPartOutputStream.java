@@ -1,4 +1,5 @@
 package giter;
+
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,13 +10,13 @@ import java.nio.charset.Charset;
  */
 public class NMultiPartOutputStream extends FilterOutputStream {
 
-	private static byte[] __CRLF;
-	private static byte[] __DASHDASH;
+	private static byte[]					__CRLF;
+	private static byte[]					__DASHDASH;
 
-	public static String MULTIPART_MIXED = "multipart/mixed";
-	public static String MULTIPART_X_MIXED_REPLACE = "multipart/x-mixed-replace";
+	public static String					MULTIPART_MIXED						= "multipart/mixed";
+	public static String					MULTIPART_X_MIXED_REPLACE	= "multipart/x-mixed-replace";
 
-	private static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+	private static final Charset	ISO_8859_1								= Charset.forName("ISO-8859-1");
 
 	static {
 		try {
@@ -27,13 +28,12 @@ public class NMultiPartOutputStream extends FilterOutputStream {
 		}
 	}
 
-	private final String boundary;
-	private final byte[] boundaryBytes;
+	private final String					boundary;
+	private final byte[]					boundaryBytes;
 
-	private boolean inPart = false;
+	private boolean								inPart										= false;
 
-	public NMultiPartOutputStream(OutputStream out, String boundary)
-			throws IOException {
+	public NMultiPartOutputStream(OutputStream out, String boundary) throws IOException {
 
 		super(out);
 
@@ -47,12 +47,11 @@ public class NMultiPartOutputStream extends FilterOutputStream {
 	 * End the current part.
 	 * 
 	 * @exception IOException
-	 *                IOException
+	 *              IOException
 	 */
 	@Override
 	public void close() throws IOException {
-		if (inPart)
-			out.write(__CRLF);
+		if (inPart) out.write(__CRLF);
 		out.write(__DASHDASH);
 		out.write(boundaryBytes);
 		out.write(__DASHDASH);
@@ -73,8 +72,7 @@ public class NMultiPartOutputStream extends FilterOutputStream {
 	 * Start creation of the next Content.
 	 */
 	public void startPart(String contentType) throws IOException {
-		if (inPart)
-			out.write(__CRLF);
+		if (inPart) out.write(__CRLF);
 		inPart = true;
 		out.write(__DASHDASH);
 		out.write(boundaryBytes);
@@ -87,10 +85,8 @@ public class NMultiPartOutputStream extends FilterOutputStream {
 	/**
 	 * Start creation of the next Content.
 	 */
-	public void startPart(String contentType, String[] headers)
-			throws IOException {
-		if (inPart)
-			out.write(__CRLF);
+	public void startPart(String contentType, String[] headers) throws IOException {
+		if (inPart) out.write(__CRLF);
 		inPart = true;
 		out.write(__DASHDASH);
 		out.write(boundaryBytes);

@@ -17,20 +17,20 @@ import java.util.Map.Entry;
  */
 public final class HttpClient {
 
-	public static final int DEFAULT_READ_TIMEOUT = 0;
-	public static final int DEFAULT_CONNECT_TIMEOUT = 5000;
+	public static final int								DEFAULT_READ_TIMEOUT		= 0;
+	public static final int								DEFAULT_CONNECT_TIMEOUT	= 5000;
 
-	private int connectTimeOut = DEFAULT_CONNECT_TIMEOUT;
-	private int readTimeOut = DEFAULT_READ_TIMEOUT;
+	private int														connectTimeOut					= DEFAULT_CONNECT_TIMEOUT;
+	private int														readTimeOut							= DEFAULT_READ_TIMEOUT;
 
-	private Proxier proxier = null;
-	private Proxy proxy = null;
+	private Proxier												proxier									= null;
+	private Proxy													proxy										= null;
 
-	private LinkedHashMap<String, String> headers = null;
-	private LinkedHashMap<String, String> cookies = null;
+	private LinkedHashMap<String, String>	headers									= null;
+	private LinkedHashMap<String, String>	cookies									= null;
 
-	private boolean persistCookies = true;
-	private boolean follow;
+	private boolean												persistCookies					= true;
+	private boolean												follow;
 
 	public HttpClient() {
 	}
@@ -39,7 +39,7 @@ public final class HttpClient {
 	 * Set User-Agent
 	 * 
 	 * @param agent
-	 *            User-Agent to set
+	 *          User-Agent to set
 	 * @return this object
 	 */
 	public HttpClient agent(String agent) {
@@ -51,14 +51,13 @@ public final class HttpClient {
 	 * Http Basic Realm
 	 * 
 	 * @param username
-	 *            username
+	 *          username
 	 * @param password
-	 *            password
+	 *          password
 	 * @return this object
 	 */
 	public HttpClient auth(String username, String password) {
-		headers().put("Authorization",
-				"Basic " + B64Code.decode(username + ":" + password));
+		headers().put("Authorization", "Basic " + B64Code.decode(username + ":" + password));
 		return this;
 	}
 
@@ -66,7 +65,7 @@ public final class HttpClient {
 	 * connect timeout
 	 * 
 	 * @param timeout
-	 *            in ms
+	 *          in ms
 	 * @return this object
 	 */
 	public HttpClient connect(int timeout) {
@@ -78,9 +77,9 @@ public final class HttpClient {
 	 * Set single cookie to request
 	 * 
 	 * @param key
-	 *            cookie key
+	 *          cookie key
 	 * @param value
-	 *            cookie value
+	 *          cookie value
 	 * @return this object
 	 */
 	public HttpClient cookie(String key, String value) {
@@ -150,19 +149,16 @@ public final class HttpClient {
 	 * delete method
 	 * 
 	 * @param url
-	 *            url to delete
+	 *          url to delete
 	 * @return this object
 	 * @throws IOException
 	 */
-	public SimpleEntry<URLConnection, String> DELETE(String url)
-			throws IOException {
+	public SimpleEntry<URLConnection, String> DELETE(String url) throws IOException {
 
-		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.DELETE(
-				proxy(), url, connectTimeOut, readTimeOut, headers()));
+		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.DELETE(proxy(), url, connectTimeOut, readTimeOut,
+				headers()));
 
-		if ((url = check(r.getKey())) != null) {
-			return GET(url);
-		}
+		if ((url = check(r.getKey())) != null) { return GET(url); }
 
 		return r;
 	}
@@ -176,19 +172,17 @@ public final class HttpClient {
 	 * GET url
 	 * 
 	 * @param url
-	 *            to GET
+	 *          to GET
 	 * @return this object
 	 * @throws IOException
 	 */
-	public SimpleEntry<URLConnection, String> GET(String url)
-			throws IOException {
+	public SimpleEntry<URLConnection, String> GET(String url) throws IOException {
 
 		int redirects = 0;
 		SimpleEntry<URLConnection, String> r;
 
 		do {
-			r = cookies(LLHttpClient.GET(proxy(), url, connectTimeOut,
-					readTimeOut, headers()));
+			r = cookies(LLHttpClient.GET(proxy(), url, connectTimeOut, readTimeOut, headers()));
 			url = check(r.getKey());
 			redirects++;
 		} while (follow && url != null && redirects < 5);
@@ -213,7 +207,7 @@ public final class HttpClient {
 	 * directly put header
 	 * 
 	 * @param header
-	 *            header to put
+	 *          header to put
 	 * @return this object
 	 */
 	final public HttpClient header(Map.Entry<String, String> header) {
@@ -236,19 +230,16 @@ public final class HttpClient {
 	 * POST url
 	 * 
 	 * @param url
-	 *            url to POST
+	 *          url to POST
 	 * @param params
-	 *            params to POST
+	 *          params to POST
 	 * @return this object
 	 * @throws IOException
 	 */
-	public SimpleEntry<URLConnection, String> POST(String url,
-			Map<String, String> params) throws IOException {
-		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.POST(
-				proxy(), url, params, connectTimeOut, readTimeOut, headers()));
-		if ((url = check(r.getKey())) != null) {
-			return GET(url);
-		}
+	public SimpleEntry<URLConnection, String> POST(String url, Map<String, String> params) throws IOException {
+		SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.POST(proxy(), url, params, connectTimeOut, readTimeOut,
+				headers()));
+		if ((url = check(r.getKey())) != null) { return GET(url); }
 
 		return r;
 	}
@@ -289,7 +280,7 @@ public final class HttpClient {
 	 * read timeout
 	 * 
 	 * @param timeout
-	 *            timeout in ms
+	 *          timeout in ms
 	 * @return this object
 	 */
 	public HttpClient read(int timeout) {
@@ -301,7 +292,7 @@ public final class HttpClient {
 	 * Set URL referer
 	 * 
 	 * @param url
-	 *            URL Referer to set
+	 *          URL Referer to set
 	 * @return this object
 	 */
 	public HttpClient referer(String url) {
@@ -309,20 +300,16 @@ public final class HttpClient {
 		return this;
 	}
 
-	protected SimpleEntry<URLConnection, String> cookies(
-			SimpleEntry<URLConnection, String> r) {
+	protected SimpleEntry<URLConnection, String> cookies(SimpleEntry<URLConnection, String> r) {
 
 		final URLConnection conn = r.getKey();
 		final String d = conn.getURL().getHost();
 
-		if (!persistCookies)
-			return r;
+		if (!persistCookies) return r;
 
-		for (Entry<String, List<String>> header : conn.getHeaderFields()
-				.entrySet()) {
+		for (Entry<String, List<String>> header : conn.getHeaderFields().entrySet()) {
 
-			if (header.getKey() == null
-					|| !header.getKey().equalsIgnoreCase("Set-Cookie")) {
+			if (header.getKey() == null || !header.getKey().equalsIgnoreCase("Set-Cookie")) {
 				continue;
 			}
 
@@ -345,8 +332,7 @@ public final class HttpClient {
 
 					String[] p = pieces[i].split("=");
 
-					if (p.length != 2)
-						continue;
+					if (p.length != 2) continue;
 
 					switch (p[0].trim().toLowerCase()) {
 					case "domain":

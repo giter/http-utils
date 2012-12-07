@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class RandomAgentSelector {
 
-	public static final String[] AGENTS = new String[] {
+	public static final String[]	AGENTS	= new String[] {
 			"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)",
 			"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
 			"Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)",
@@ -25,5 +25,5 @@ public class RandomAgentSelector {
 		return AGENTS[rander.nextInt(AGENTS.length)];
 	}
 
-	private static final Random rander = new Random();
+	private static final Random	rander	= new Random();
 }

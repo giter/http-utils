@@ -43,8 +43,7 @@ public abstract class QueryStringUtil {
 				}
 
 				try {
-					sb.append(String.format(pattern,
-							URLEncoder.encode(entry.getKey(), "UTF-8"),
+					sb.append(String.format(pattern, URLEncoder.encode(entry.getKey(), "UTF-8"),
 							URLEncoder.encode(entry.getValue(), "UTF-8")));
 				} catch (UnsupportedEncodingException e) {
 					throw new RuntimeException(e);
