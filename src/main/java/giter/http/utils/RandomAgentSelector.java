@@ -1,4 +1,4 @@
-package giter;
+package giter.http.utils;
 
 import java.util.Random;
 

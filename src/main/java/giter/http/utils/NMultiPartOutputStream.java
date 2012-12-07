@@ -1,4 +1,4 @@
-package giter;
+package giter.http.utils;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;

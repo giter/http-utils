@@ -1,6 +1,6 @@
 //  Copyright (c) 1995-2012 Mort Bay Consulting Pty. Ltd.
 
-package giter;
+package giter.http.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
