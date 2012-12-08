@@ -11,11 +11,12 @@ public class TestQueryStringUtil {
 
 	@Test
 	public void parseEmptyString() {
-		Assert.assertTrue(QueryStringUtil.parse(null).size() == 0);
-		Assert.assertTrue(QueryStringUtil.parse("").size() == 0);
-		Assert.assertTrue(QueryStringUtil.parse("\n").size() == 0);
-		Assert.assertTrue(QueryStringUtil.parse(" \n").size() == 0);
-		Assert.assertTrue(QueryStringUtil.parse("\t \n").size() == 0);
+		Assert.assertEquals(0, QueryStringUtil.parse(null).size());
+		Assert.assertEquals(0, QueryStringUtil.parse("").size());
+		Assert.assertEquals(0, QueryStringUtil.parse("\n").size());
+		Assert.assertEquals(0, QueryStringUtil.parse(" \n").size());
+		Assert.assertEquals(0, QueryStringUtil.parse("\t\u0003 \n\u0000\u0001\u0002").size());
+		Assert.assertEquals(1, QueryStringUtil.parse("\t\u0003 p\n\u0000p\u0001\u0002").size());
 	}
 
 	@Test
@@ -33,7 +34,7 @@ public class TestQueryStringUtil {
 		Assert.assertEquals("1= ", parsed.get("a"));
 
 		// first value should be returned
-		parsed = QueryStringUtil.parse("a=1&c&d&e&f&f=1&a");
+		parsed = QueryStringUtil.parse("a=1&c&d&&&&e&f&f=1&a");
 		Assert.assertTrue(parsed.size() == 5);
 		Assert.assertEquals("1", parsed.get("a"));
 		Assert.assertEquals("", parsed.get("f"));
