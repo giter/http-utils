@@ -3,13 +3,20 @@ package giter.http.utils;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public abstract class QueryStringUtil {
 
-  public static Map<String, String> parse(String queryString) {
+  /**
+   * Parse URL QueryString by UTF-8 encoding to Map
+   * 
+   * @param queryString
+   *          Query String
+   * @return Map
+   */
+  public static LinkedHashMap<String, String> parse(String queryString) {
     return parse(queryString, "UTF-8");
   }
 
@@ -22,9 +29,9 @@ public abstract class QueryStringUtil {
    *          URL Encoding
    * @return If the queryString contains multiple parameters with a same name, first returned
    */
-  public static Map<String, String> parse(String queryString, String encoding) {
+  public static LinkedHashMap<String, String> parse(String queryString, String encoding) {
 
-    Map<String, String> params = new HashMap<>();
+    LinkedHashMap<String, String> params = new LinkedHashMap<>();
 
     if (queryString == null) { return params; }
 
@@ -60,7 +67,7 @@ public abstract class QueryStringUtil {
         v = "";
       }
 
-      if (!params.containsKey(k)) {
+      if (k.length() > 0 && !params.containsKey(k)) {
         params.put(k, v);
       }
     }
@@ -69,6 +76,10 @@ public abstract class QueryStringUtil {
   }
 
   public static String query(Map<String, String> params) {
+    return query(params, "UTF-8");
+  }
+
+  public static String query(Map<String, String> params, String encoding) {
 
     String query = "";
 
@@ -76,21 +87,20 @@ public abstract class QueryStringUtil {
 
       StringBuilder sb = new StringBuilder();
 
-      String pattern = "%s=%s";
-
       boolean first = true;
 
       for (Entry<String, String> entry : params.entrySet()) {
 
         if (!first) {
-          sb.append("&");
+          sb.append('&');
         } else {
           first = false;
         }
 
         try {
-          sb.append(String.format(pattern, URLEncoder.encode(entry.getKey(), "UTF-8"),
-              URLEncoder.encode(entry.getValue(), "UTF-8")));
+          sb.append(URLEncoder.encode(entry.getKey(), encoding));
+          sb.append('=');
+          sb.append(URLEncoder.encode(entry.getValue(), encoding));
         } catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
         }
