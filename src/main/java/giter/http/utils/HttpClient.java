@@ -237,8 +237,10 @@ public final class HttpClient {
    * @throws IOException
    */
   public SimpleEntry<URLConnection, String> POST(String url, Map<String, String> params) throws IOException {
+
     SimpleEntry<URLConnection, String> r = cookies(LLHttpClient.POST(proxy(), url, params, connectTimeOut, readTimeOut,
         headers()));
+
     if ((url = check(r.getKey())) != null) { return GET(url); }
 
     return r;

@@ -65,6 +65,7 @@ public abstract class LLHttpClient {
 
     URLConnection conn = new URL(url).openConnection(proxy == null ? Proxy.NO_PROXY : proxy);
 
+    // we will manage redirection by ourself,so disable here
     if (conn instanceof HttpURLConnection) {
       ((HttpURLConnection) conn).setInstanceFollowRedirects(false);
     }
