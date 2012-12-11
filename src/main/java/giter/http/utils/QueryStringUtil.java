@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 
 public abstract class QueryStringUtil {
 
+  private static final String DEFAULT_ENCODING = "UTF-8";
+
   /**
    * Parse URL QueryString by UTF-8 encoding to Map
    * 
@@ -17,7 +19,7 @@ public abstract class QueryStringUtil {
    * @return Map
    */
   public static LinkedHashMap<String, String> parse(String queryString) {
-    return parse(queryString, "UTF-8");
+    return parse(queryString, DEFAULT_ENCODING);
   }
 
   /**
@@ -76,7 +78,7 @@ public abstract class QueryStringUtil {
   }
 
   public static String query(Map<String, String> params) {
-    return query(params, "UTF-8");
+    return query(params, DEFAULT_ENCODING);
   }
 
   public static String query(Map<String, String> params, String encoding) {
