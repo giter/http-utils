@@ -17,7 +17,7 @@ import java.util.Map.Entry;
  */
 public final class HttpClient {
 
-  public static final int DEFAULT_READ_TIMEOUT = 0;
+  public static final int DEFAULT_READ_TIMEOUT = 120000;
   public static final int DEFAULT_CONNECT_TIMEOUT = 5000;
 
   private int connectTimeOut = DEFAULT_CONNECT_TIMEOUT;
