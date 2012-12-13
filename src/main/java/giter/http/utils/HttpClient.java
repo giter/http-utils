@@ -57,7 +57,7 @@ public final class HttpClient {
    * @return this object
    */
   public HttpClient auth(String username, String password) {
-    headers().put("Authorization", "Basic " + B64Code.decode(username + ":" + password));
+    headers().put("Authorization", "Basic " + B64Code.encode(username + ":" + password));
     return this;
   }
 
