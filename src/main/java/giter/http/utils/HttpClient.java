@@ -187,6 +187,11 @@ public final class HttpClient {
       redirects++;
     } while (follow && url != null && redirects < 5);
 
+    if (r != null && follow && redirects >= 5 && r != null && r.getKey() instanceof HttpURLConnection) {
+      if (((HttpURLConnection) r.getKey()).getResponseCode() != HttpURLConnection.HTTP_OK) { throw new IOException(
+          "Detected recursive redirecting: " + url); }
+    }
+
     return r;
   }
 
