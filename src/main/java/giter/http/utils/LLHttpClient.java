@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 /**
@@ -199,7 +200,7 @@ public abstract class LLHttpClient {
       case "gzip":
         return new GZIPInputStream(cin);
       case "deflate":
-        return new InflaterInputStream(cin);
+        return new InflaterInputStream(cin, new Inflater(true));
       default:
         throw new IOException("Unsupported encoding format: " + encoding);
       }
