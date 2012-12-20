@@ -2,6 +2,7 @@ package giter.http.utils;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -233,8 +234,12 @@ public abstract class LLHttpClient {
     byte[] buff = new byte[BUF_SIZE];
     int n = -1;
 
-    while ((n = in.read(buff)) >= 0) {
-      out.write(buff, 0, n);
+    try {
+      while ((n = in.read(buff)) >= 0) {
+        out.write(buff, 0, n);
+      }
+    } catch (EOFException eof) {
+      // reach EOF , return
     }
   }
 
