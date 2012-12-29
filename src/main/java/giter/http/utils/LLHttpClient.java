@@ -46,18 +46,17 @@ public abstract class LLHttpClient {
     Matcher matcher = CHARSET_PATTERN.matcher(content);
 
     if (matcher.find()) {
-
       for (int i = 0; i < matcher.groupCount(); i++) {
         s = matcher.group(i + 1);
-        if (s != null) break;
+        if (s != null) {
+          // 处理未在IANA列表中的字符集，如x-gbk
+          if (s.startsWith("x-") || s.startsWith("X-")) {
+            s = s.substring(2);
+          }
+          s = s.toLowerCase();
+          break;
+        }
       }
-
-      // 处理未在IANA列表中的字符集，如x-gbk
-      if (s.startsWith("x-") || s.startsWith("X-")) {
-        s = s.substring(2);
-      }
-
-      s = s.toLowerCase();
     }
 
     return s;
