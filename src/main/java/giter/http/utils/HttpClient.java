@@ -1,6 +1,7 @@
 package giter.http.utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URLConnection;
@@ -187,12 +188,30 @@ public final class HttpClient {
       redirects++;
     } while (follow && url != null && redirects < 5);
 
-    if (r != null && follow && redirects >= 5 && r != null && r.getKey() instanceof HttpURLConnection) {
+    if (follow && redirects >= 5 && r != null && r.getKey() instanceof HttpURLConnection) {
       if (((HttpURLConnection) r.getKey()).getResponseCode() != HttpURLConnection.HTTP_OK) { throw new IOException(
           "Detected recursive redirecting: " + url); }
     }
 
     return r;
+  }
+
+  public InputStream stream(String url) throws IOException {
+
+    int redirects = 0;
+    URLConnection conn;
+    do {
+      conn = LLHttpClient.connect(proxy(), "GET", url, connectTimeOut, readTimeOut, headers());
+      url = check(cookies(conn));
+      redirects++;
+    } while (follow && url != null && redirects < 5);
+
+    if (follow && redirects >= 5 && conn != null && conn instanceof HttpURLConnection) {
+      if (((HttpURLConnection) conn).getResponseCode() != HttpURLConnection.HTTP_OK) { throw new IOException(
+          "Detected recursive redirecting: " + url); }
+    }
+
+    return LLHttpClient.getInputStream(conn);
   }
 
   private LinkedHashMap<String, String> headers() {
@@ -215,8 +234,13 @@ public final class HttpClient {
    *          header to put
    * @return this object
    */
-  final public HttpClient header(Map.Entry<String, String> header) {
+  public HttpClient header(Map.Entry<String, String> header) {
     headers().put(header.getKey(), header.getValue());
+    return this;
+  }
+
+  public HttpClient header(String key, String val) {
+    headers().put(key, val);
     return this;
   }
 
@@ -315,11 +339,15 @@ public final class HttpClient {
   }
 
   protected SimpleEntry<URLConnection, String> cookies(SimpleEntry<URLConnection, String> r) {
+    cookies(r.getKey());
+    return r;
+  }
 
-    final URLConnection conn = r.getKey();
+  protected URLConnection cookies(URLConnection conn) {
+
     final String d = conn.getURL().getHost();
 
-    if (!persistCookies) return r;
+    if (!persistCookies) return conn;
 
     for (Entry<String, List<String>> header : conn.getHeaderFields().entrySet()) {
 
@@ -365,6 +393,6 @@ public final class HttpClient {
       }
     }
 
-    return r;
+    return conn;
   }
 }
