@@ -3,27 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<distributionManagement>
-		<site>
-			<id>github</id>
-			<url>scm:git:ssh://git@github.com/giter/http-utils.git</url>
-		</site>
 		<repository>
-			<id>internal.repo</id>
-			<name>Temporary Staging Repository</name>
-			<url>file://${project.build.directory}/mvn-repo</url>
+			<id>hd-dev</id>
+			<name>hd-dev-releases</name>
+			<url>http://192.168.100.235:8081/artifactory/MiddleWare</url>
 		</repository>
+		<snapshotRepository>
+			<id>hd-dev</id>
+			<name>hd-dev-snapshots</name>
+			<url>http://192.168.100.235:8081/artifactory/MiddleWare</url>
+		</snapshotRepository>
 	</distributionManagement>
-
-	<scm>
-		<connection>scm:git:ssh://git@github.com/giter/http-utils.git</connection>
-		<url>http://github.com/giter/http-utils</url>
-		<developerConnection>scm:git:ssh://git@github.com/giter/http-utils.git/</developerConnection>
-	</scm>
-
-	<properties>
-		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
-		<github.global.server>github</github.global.server>
-	</properties>
 
 	<groupId>giter</groupId>
 	<artifactId>http-utils</artifactId>
@@ -89,22 +79,6 @@
 				</executions>
 			</plugin>
 
-			<plugin>
-				<groupId>com.github.github</groupId>
-				<artifactId>site-maven-plugin</artifactId>
-				<version>0.9</version>
-				<configuration>
-					<message>Creating site for ${project.artifactId} ${project.version}</message>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>site</goal>
-						</goals>
-						<phase>site</phase>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 
